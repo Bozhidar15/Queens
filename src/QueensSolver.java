@@ -2,74 +2,84 @@ import java.util.*;
 
 public class QueensSolver {
 
-
     private static void diagonalsOutOfBoard(int y, int x, int size, int[][] conflicts, boolean plusMinus) {
         boolean check = x >= size || y >= size || x < 0 || y < 0;
-        if (plusMinus){
+        if (plusMinus) {
             if (check)
                 return;
             conflicts[x][y]++;
-        }else {
+        } else {
             if (check)
                 return;
             conflicts[x][y]--;
         }
     }
 
-    private static void fixRowAndDiagonal(int row, int col, int[][] conflicts, int size, boolean plusMinus){
-        for (int j = 0; j < size; j++) { //row
+    private static void fixRowAndDiagonal(int row, int col, int[][] conflicts, int size, boolean plusMinus) {
+        for (int j = 0; j < size; j++) { // ред
             if (col == j)
                 continue;
-            if (plusMinus){
+            if (plusMinus) {
                 conflicts[row][j]++;
-            }else {
+            } else {
                 conflicts[row][j]--;
             }
         }
         for (int j = 1; j < size; j++) {
-            diagonalsOutOfBoard(col-j, row+j, size, conflicts,plusMinus);
-            diagonalsOutOfBoard(col-j, row-j, size, conflicts,plusMinus);
-            diagonalsOutOfBoard(col+j, row+j, size, conflicts,plusMinus);
-            diagonalsOutOfBoard(col+j, row-j, size, conflicts,plusMinus);
-        }
-    }
-    private static void fillBoard(int[] queens, int[][] conflicts, int size){
-        for (int i = 0; i < size; i++) {
-            Random random = new Random();
-            int randomNumber = random.nextInt(size);
-            queens[i]=randomNumber;
-            for (int j = 0; j < size; j++) { //col
-                conflicts[j][i]++;
-            }
-            fixRowAndDiagonal(randomNumber,i,conflicts,size,true);
+            diagonalsOutOfBoard(col - j, row + j, size, conflicts, plusMinus);
+            diagonalsOutOfBoard(col - j, row - j, size, conflicts, plusMinus);
+            diagonalsOutOfBoard(col + j, row + j, size, conflicts, plusMinus);
+            diagonalsOutOfBoard(col + j, row - j, size, conflicts, plusMinus);
         }
     }
 
-    private static void maxConflictQueen(int[] queens, int size, int[][] conflicts, int lastOneIndexCol){ // last queen checked ?
-        int row=0,col=0,max=1,min=Integer.MAX_VALUE, index=-1;
+    private static void fillBoard(int[] queens, int[][] conflicts, int size) {
+        Random random = new Random();
         for (int i = 0; i < size; i++) {
-            if (i == lastOneIndexCol)
-                continue;
-            if (max < conflicts[queens[i]][i]){
-                max=conflicts[queens[i]][i];
-                row=queens[i];
-                col=i;
+            int randomNumber = random.nextInt(size);
+            queens[i] = randomNumber;
+            for (int j = 0; j < size; j++) { // колона
+                conflicts[j][i]++;
             }
+            fixRowAndDiagonal(randomNumber, i, conflicts, size, true);
         }
-        if (max == 1)
-            return;
-        for (int i = 0; i < size; i++) {
-            if (i == row)
-                continue;
-            if (min > conflicts[i][col]) {
-                index = i;
-                min=conflicts[i][col];
+    }
+
+    private static void resolveConflicts(int[] queens, int size, int[][] conflicts) {
+        int lastConflictIndex = -1;
+        boolean hasConflicts = true;
+        while (hasConflicts) {
+            hasConflicts = false;
+            int row = 0, col = 0, max = 1, min = Integer.MAX_VALUE, newRow = -1;
+
+            for (int i = 0; i < size; i++) {
+                if (i == lastConflictIndex)
+                    continue;
+                if (max < conflicts[queens[i]][i]) {
+                    max = conflicts[queens[i]][i];
+                    row = queens[i];
+                    col = i;
+                }
             }
+
+            if (max == 1)
+                return;
+
+            for (int i = 0; i < size; i++) {
+                if (i == row)
+                    continue;
+                if (min > conflicts[i][col]) {
+                    newRow = i;
+                    min = conflicts[i][col];
+                }
+            }
+
+            fixRowAndDiagonal(row, col, conflicts, size, false);
+            fixRowAndDiagonal(newRow, col, conflicts, size, true);
+            queens[col] = newRow;
+            lastConflictIndex = col;
+            hasConflicts = true;
         }
-        fixRowAndDiagonal(row, col, conflicts,size,false);
-        fixRowAndDiagonal(index, col, conflicts, size, true);
-        queens[col]=index;
-        maxConflictQueen(queens,size,conflicts,col);
     }
 
     public static void main(String[] args) {
@@ -82,14 +92,16 @@ public class QueensSolver {
         }
         int[] queens = new int[N];
         int[][] conflicts = new int[N][N];
-        fillBoard(queens,conflicts,N);
+        fillBoard(queens, conflicts, N);
+
         long startTime = System.currentTimeMillis();
-        maxConflictQueen(queens,N,conflicts,-1);
+        resolveConflicts(queens, N, conflicts);
         long endTime = System.currentTimeMillis();
+
         if (N < 100) {
             for (int i = 0; i < N; i++) {
                 for (int j = 0; j < N; j++) {
-                    if(i == queens[j])
+                    if (i == queens[j])
                         System.out.print('*');
                     else
                         System.out.print('_');
