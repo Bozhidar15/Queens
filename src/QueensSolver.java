@@ -101,8 +101,8 @@ public class QueensSolver {
         long endTime = System.currentTimeMillis();
 
         if (!solved) {
-            System.out.println(-1); // При неуспех
-        } else if (N < 100) {
+            System.out.println(-1);
+        } else if (N <= 100) {
             for (int i = 0; i < N; i++) {
                 for (int j = 0; j < N; j++) {
                     System.out.print(i == queens[j] ? '*' : '_');
