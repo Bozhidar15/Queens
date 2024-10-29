@@ -25,14 +25,18 @@ public class QueensSolver {
     }
 
     private static void initializeBoard(int[] queens, int[][] conflicts, int size) {
-        Random random = new Random();
+        int horse = 1;
+
         for (int i = 0; i < size; i++) {
-            int randomRow = random.nextInt(size);
-            queens[i] = randomRow;
+            if (horse >= size) {
+                horse = (size % 2 == 0) ? horse - size - 1 : horse - size;
+            }
+            queens[i] = horse;
             for (int j = 0; j < size; j++) {
                 conflicts[j][i]++;
             }
-            fixRowAndDiagonal(randomRow, i, conflicts, size, true);
+            fixRowAndDiagonal(horse, i, conflicts, size, true);
+            horse += 2;
         }
     }
 
@@ -58,23 +62,33 @@ public class QueensSolver {
                 return true;
             }
 
-            int col = conflictColumns.get(new Random().nextInt(conflictColumns.size()));
-            //int col = conflictColumns.get(0);
-            int currentRow = queens[col];
+            int bestCol = -1;
+            int bestRow = -1;
+            int minConflictsForMove = Integer.MAX_VALUE;
+            Random random = new Random();
 
-            int minConflicts = Integer.MAX_VALUE;
-            int bestRow = currentRow;
-            for (int row = 0; row < size; row++) {
-                if (row == currentRow) continue;
-                if (conflicts[row][col] < minConflicts) {
-                    minConflicts = conflicts[row][col];
-                    bestRow = row;
+            for (int col : conflictColumns) {
+                int currentRow = queens[col];
+
+                for (int row = 0; row < size; row++) {
+                    if (row == currentRow) continue;
+                    int moveConflicts = conflicts[row][col];
+
+                    if (moveConflicts < minConflictsForMove) {
+                        minConflictsForMove = moveConflicts;
+                        bestCol = col;
+                        bestRow = row;
+                    } else if (moveConflicts == minConflictsForMove && random.nextBoolean()) {
+                        bestCol = col;
+                        bestRow = row;
+                    }
                 }
             }
 
-            fixRowAndDiagonal(currentRow, col, conflicts, size, false);
-            fixRowAndDiagonal(bestRow, col, conflicts, size, true);
-            queens[col] = bestRow;
+            int currentRow = queens[bestCol];
+            fixRowAndDiagonal(currentRow, bestCol, conflicts, size, false);
+            fixRowAndDiagonal(bestRow, bestCol, conflicts, size, true);
+            queens[bestCol] = bestRow;
 
             steps++;
         }
@@ -86,7 +100,7 @@ public class QueensSolver {
         System.out.println("Queens count: ");
         Scanner scanner = new Scanner(System.in);
         int N = scanner.nextInt();
-        if (N <= 0) {
+        if (N <= 0 || N == 2 || N == 3) {
             System.out.println(-1);
             return;
         }
